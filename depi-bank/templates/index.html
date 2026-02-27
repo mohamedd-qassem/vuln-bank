@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEPI BANK | Online Banking</title>
+    <style>
+        :root { --primary-color: #7d0303; --secondary-color: #7d0303; --background-light: #f4f7f6; --text-dark: #333; --text-light: #fff; --danger: #d32f2f; --success: #388e3c; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--background-light); color: var(--text-dark); }
+        nav { background-color: var(--primary-color); color: var(--text-light); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        nav h1 { font-size: 1.5rem; letter-spacing: 1px; }
+        nav button { background-color: transparent; color: white; border: 1px solid white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; transition: 0.3s; }
+        nav button:hover { background-color: white; color: var(--primary-color); }
+        #login-view { display: flex; justify-content: center; align-items: center; height: 80vh; }
+        .login-box { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: var(--primary-color); }
+        .input-group { margin-bottom: 1.2rem; }
+        .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .input-group input { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        .btn { width: 100%; padding: 0.8rem; background-color: var(--secondary-color); color: white; border: none; border-radius: 4px; font-size: 1.1rem; cursor: pointer; transition: background 0.3s; }
+        .btn:hover { background-color: var(--primary-color); }
+        #dashboard-view { display: none; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        .dashboard-header { margin-bottom: 2rem; }
+        .balance-card { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 2rem; }
+        .balance-card h3 { font-weight: normal; margin-bottom: 0.5rem; opacity: 0.9; }
+        .balance-card h1 { font-size: 2.5rem; }
+        .grid-container { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card h3 { margin-bottom: 1rem; color: var(--primary-color); border-bottom: 2px solid var(--background-light); padding-bottom: 0.5rem; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        .amount-positive { color: var(--success); font-weight: bold; }
+        .amount-negative { color: var(--danger); font-weight: bold; }
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h1>🏛️ DEPI BANK</h1>
+        <button id="logout-btn" style="display: none;" onclick="logout()">Secure Logout</button>
+    </nav>
+
+    <div id="login-view">
+        <div class="login-box">
+            <h2>Account Login</h2>
+            <form id="login-form" onsubmit="login(event)">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username">
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                </div>
+                <button type="submit" class="btn">Login to Internet Banking</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-view">
+        <div class="dashboard-header">
+            <h2 id="welcome-msg">Welcome back!</h2>
+        </div>
+
+        <div class="balance-card">
+            <h3>Available Balance</h3>
+            <h1 id="account-balance">...</h1>
+            <p>Account Number: **** **** **** 4091</p>
+        </div>
+
+        <div class="grid-container">
+            <div class="card">
+                <h3>Transfer Funds</h3>
+                <form id="transfer-form" onsubmit="transferFunds(event)">
+                    <div class="input-group">
+                        <label>Recipient Account</label>
+                        <input type="text" id="recipient" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Amount ($)</label>
+                        <input type="number" id="amount" min="1" step="0.01" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <input type="text" id="desc">
+                    </div>
+                    <button type="submit" class="btn">Send Money</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Recent Transactions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('login-view').style.display = 'none';
+                document.getElementById('dashboard-view').style.display = 'block';
+                document.getElementById('logout-btn').style.display = 'block';
+                loadDashboard();
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function loadDashboard() {
+            const response = await fetch('/api/dashboard');
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('welcome-msg').innerText = `Welcome back, ${data.name}!`;
+                document.getElementById('account-balance').innerText = `$${data.balance.toFixed(2)}`;
+                
+                const tbody = document.getElementById('transaction-body');
+                tbody.innerHTML = ''; 
+                
+                data.transactions.forEach(tx => {
+                    const row = document.createElement('tr');
+                    const amtClass = tx.amount > 0 ? 'amount-positive' : 'amount-negative';
+                    const amtPrefix = tx.amount > 0 ? '+' : '';
+                    row.innerHTML = `
+                        <td>${tx.date}</td>
+                        <td>${tx.desc}</td>
+                        <td class="${amtClass}">${amtPrefix}$${tx.amount.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        async function transferFunds(event) {
+            event.preventDefault();
+            const recipient = document.getElementById('recipient').value;
+            const amount = document.getElementById('amount').value;
+            const desc = document.getElementById('desc').value;
+
+            const response = await fetch('/api/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient, amount, desc })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert("Transfer successful!");
+                document.getElementById('transfer-form').reset();
+                loadDashboard();
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('login-view').style.display = 'flex';
+            document.getElementById('login-form').reset();
+        }
+
+        loadDashboard().catch(() => console.log("User not logged in"));
+    </script>
+</body>
+</html>
