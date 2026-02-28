@@ -1,192 +1,541 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DEPI BANK | Online Banking</title>
+    <title>DEPI Bank | Online Banking Services</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary-color: #7d0303; --secondary-color: #7d0303; --background-light: #f4f7f6; --text-dark: #333; --text-light: #fff; --danger: #d32f2f; --success: #388e3c; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--background-light); color: var(--text-dark); }
-        nav { background-color: var(--primary-color); color: var(--text-light); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        nav h1 { font-size: 1.5rem; letter-spacing: 1px; }
-        nav button { background-color: transparent; color: white; border: 1px solid white; padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; transition: 0.3s; }
-        nav button:hover { background-color: white; color: var(--primary-color); }
-        #login-view { display: flex; justify-content: center; align-items: center; height: 80vh; }
-        .login-box { background: white; padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        .login-box h2 { text-align: center; margin-bottom: 1.5rem; color: var(--primary-color); }
-        .input-group { margin-bottom: 1.2rem; }
-        .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .input-group input { width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-        .btn { width: 100%; padding: 0.8rem; background-color: var(--secondary-color); color: white; border: none; border-radius: 4px; font-size: 1.1rem; cursor: pointer; transition: background 0.3s; }
-        .btn:hover { background-color: var(--primary-color); }
-        #dashboard-view { display: none; max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
-        .dashboard-header { margin-bottom: 2rem; }
-        .balance-card { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 2rem; }
-        .balance-card h3 { font-weight: normal; margin-bottom: 0.5rem; opacity: 0.9; }
-        .balance-card h1 { font-size: 2.5rem; }
-        .grid-container { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .card h3 { margin-bottom: 1rem; color: var(--primary-color); border-bottom: 2px solid var(--background-light); padding-bottom: 0.5rem; }
-        table { width: 100%; border-collapse: collapse; }
-        table th, table td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
-        .amount-positive { color: var(--success); font-weight: bold; }
-        .amount-negative { color: var(--danger); font-weight: bold; }
-        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+        /* Additional inline styles for professionalism */
+        body {
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .auth-container {
+            max-width: 420px;
+            margin: 60px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .tab:hover {
+            background: #f0f0f0;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .account-number {
+            font-family: monospace;
+            letter-spacing: 1px;
+            color: #fff;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+            font-style: italic;
+        }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+
+        .confirm-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95);
+            transition: transform 0.3s;
+        }
+
+        .confirm-dialog:not(.hidden) .confirm-box {
+            transform: scale(1);
+        }
+
+        .btn {
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .balance-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+        }
     </style>
 </head>
+
 <body>
 
     <nav>
-        <h1>🏛️ DEPI BANK</h1>
-        <button id="logout-btn" style="display: none;" onclick="logout()">Secure Logout</button>
+        <h1>🏛️ DEPI Bank</h1>
+        <button id="logout-btn"
+            style="display: none; background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9)); color: white; border: none; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3); letter-spacing: 0.3px;"
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(231, 76, 60, 0.4)';"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(231, 76, 60, 0.3)';">🚪
+            Sign Out</button>
     </nav>
 
-    <div id="login-view">
-        <div class="login-box">
-            <h2>Account Login</h2>
-            <form id="login-form" onsubmit="login(event)">
-                <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username">
-                </div>
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password">
-                </div>
-                <button type="submit" class="btn">Login to Internet Banking</button>
-            </form>
+    <!-- Auth Views -->
+    <div id="auth-view" class="auth-container">
+        <!-- Login Form -->
+        <div id="login-form-container">
+            <div class="login-box">
+                <h2>Sign In</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="login-username">Username</label>
+                        <input type="text" id="login-username" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+                <p style="margin-top:1rem; text-align:center;">
+                    Don't have an account? <a href="/register">Register here</a>
+                </p>
+            </div>
         </div>
     </div>
 
-    <div id="dashboard-view">
+    <!-- Dashboard -->
+    <div id="dashboard-view" style="display:none; max-width: 1200px; margin: 3rem auto; padding: 0 1.5rem;">
         <div class="dashboard-header">
-            <h2 id="welcome-msg">Welcome back!</h2>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                <span style="font-size: 2.5rem;">👋</span>
+                <div>
+                    <h2 id="welcome-msg" style="margin: 0;">Welcome back!</h2>
+                    <p style="color: #7f8c8d; margin: 0.5rem 0 0 0;">Manage your finances with ease</p>
+                </div>
+            </div>
         </div>
 
-        <div class="balance-card">
-            <h3>Available Balance</h3>
-            <h1 id="account-balance">...</h1>
-            <p>Account Number: **** **** **** 4091</p>
-        </div>
-
-        <div class="grid-container">
-            <div class="card">
-                <h3>Transfer Funds</h3>
-                <form id="transfer-form" onsubmit="transferFunds(event)">
-                    <div class="input-group">
-                        <label>Recipient Account</label>
-                        <input type="text" id="recipient" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Amount ($)</label>
-                        <input type="number" id="amount" min="1" step="0.01" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Description</label>
-                        <input type="text" id="desc">
-                    </div>
-                    <button type="submit" class="btn">Send Money</button>
-                </form>
+        <div id="main-dashboard">
+            <div class="balance-card">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <span style="font-size: 2rem;">💰</span>
+                    <h3 style="margin: 0; flex: 1;">Available Balance</h3>
+                </div>
+                <h1 id="account-balance">$0.00</h1>
+                <p>Account Number: <span class="account-number" id="account-number">**** **** **** 4091</span></p>
             </div>
 
-            <div class="card">
-                <h3>Recent Transactions</h3>
-                <table>
+            <div class="grid-container">
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <span style="font-size: 1.8rem;">💸</span>
+                        <h3 style="margin: 0;">Transfer Funds</h3>
+                    </div>
+                    <form id="transfer-form">
+                        <div class="input-group">
+                            <label>Recipient Username</label>
+                            <input type="text" id="recipient" required placeholder="e.g., ahmed123">
+                        </div>
+                        <div class="input-group">
+                            <label>Amount ($)</label>
+                            <input type="number" id="amount" min="1" step="0.01" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Description (Optional)</label>
+                            <input type="text" id="desc" maxlength="100">
+                        </div>
+                        <button type="submit" class="btn"
+                            style="width: 100%; background: linear-gradient(135deg, #4a90e2, #2c5aa0);">Send
+                            Money</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem;">
+                        <span style="font-size: 1.8rem;">📊</span>
+                        <h3 style="margin: 0;">Recent Transactions</h3>
+                    </div>
+                    <div id="transactions-loading" class="loading">Loading transactions...</div>
+                    <table id="transactions-table" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">📅 Date</th>
+                                <th style="width: 45%;">📝 Description</th>
+                                <th style="width: 30%; text-align: right;">💵 Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-body"></tbody>
+                    </table>
+                    <div style="text-align:center; margin-top:1.5rem;">
+                        <button id="view-all-transactions"
+                            style="display:none; background: linear-gradient(135deg, #2ecc71, #27ae60); width: 100%;"
+                            class="btn">📋 View All Transactions</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div
+                style="margin-top: 3rem; padding: 2rem; background: linear-gradient(135deg, rgba(74, 144, 226, 0.08), rgba(44, 90, 160, 0.08)); border-radius: 12px;">
+                <h3 style="text-align: center; margin-bottom: 1.5rem; color: #2c3e50;">⚡ Quick Actions</h3>
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; padding: 1rem 0;">
+                    <div id="action-change-password"
+                        style="text-align: center; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.1)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+                        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🔐</span>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Change Password</p>
+                    </div>
+                    <div id="action-contact-support"
+                        style="text-align: center; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.1)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+                        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">📞</span>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Contact Support</p>
+                    </div>
+                    <div id="action-account-settings"
+                        style="text-align: center; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.1)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+                        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">🏦</span>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Account Settings</p>
+                    </div>
+                    <div id="action-card-details"
+                        style="text-align: center; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.1)';"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';">
+                        <span style="font-size: 2rem; display: block; margin-bottom: 0.5rem;">💳</span>
+                        <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Card Details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard Section -->
+    <div id="admin-dashboard" class="hidden" style="margin-top: 3rem; padding: 0;">
+        <!-- Admin Header -->
+        <div
+            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; color: white;">
+            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.8rem;">👑 Admin Dashboard</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">System Management & Monitoring</p>
+        </div>
+
+        <!-- System Statistics -->
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div
+                style="background: white; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #3498db; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h4
+                    style="color: #7f8c8d; font-size: 0.85rem; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 1px;">
+                    Total Users</h4>
+                <p id="admin-user-count" style="margin: 0; font-size: 2rem; font-weight: bold; color: #2c3e50;">0
+                </p>
+            </div>
+            <div
+                style="background: white; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #27ae60; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h4
+                    style="color: #7f8c8d; font-size: 0.85rem; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 1px;">
+                    Total Transactions</h4>
+                <p id="admin-transaction-count" style="margin: 0; font-size: 2rem; font-weight: bold; color: #2c3e50;">0
+                </p>
+            </div>
+            <div
+                style="background: white; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #f39c12; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h4
+                    style="color: #7f8c8d; font-size: 0.85rem; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 1px;">
+                    Total Volume</h4>
+                <p id="admin-transaction-volume"
+                    style="margin: 0; font-size: 1.8rem; font-weight: bold; color: #2c3e50;">$0.00</p>
+            </div>
+            <div
+                style="background: white; padding: 1.5rem; border-radius: 12px; border-left: 4px solid #8e44ad; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <h4
+                    style="color: #7f8c8d; font-size: 0.85rem; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 1px;">
+                    System Balance</h4>
+                <p id="admin-system-balance" style="margin: 0; font-size: 1.8rem; font-weight: bold; color: #2c3e50;">
+                    $0.00</p>
+            </div>
+        </div>
+
+        <!-- Users Management Table -->
+        <div
+            style="background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h3 style="margin: 0 0 1.5rem 0; color: #2c3e50; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">👥</span> User Management
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Amount</th>
+                        <tr style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Username</th>
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Balance</th>
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="transaction-body">
-                        </tbody>
+                    <tbody id="admin-users-table">
+                        <tr>
+                            <td colspan="3" style="padding: 2rem; text-align: center; color: #7f8c8d;">Loading
+                                users...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transactions Overview -->
+        <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h3 style="margin: 0 0 1.5rem 0; color: #2c3e50; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">💳</span> Recent Transactions
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">From</th>
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">To</th>
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Amount</th>
+                            <th style="padding: 1rem; text-align: left; font-weight: 600;">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-transactions-table">
+                        <tr>
+                            <td colspan="4" style="padding: 2rem; text-align: center; color: #7f8c8d;">Loading
+                                transactions...</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <script>
+    <!-- Change Password Modal -->
+    <div id="modal-change-password" class="confirm-dialog hidden">
+        <div class="confirm-box">
+            <h3>🔐 Change Password</h3>
+            <form id="change-password-form">
+                <div class="input-group" style="text-align: left; margin-top: 1.5rem;">
+                    <label>Current Password</label>
+                    <input type="password" id="current-password" required placeholder="Enter current password">
+                </div>
+                <div class="input-group" style="text-align: left;">
+                    <label>New Password</label>
+                    <input type="password" id="new-password" required minlength="6" placeholder="Create new password">
+                </div>
+                <div class="input-group" style="text-align: left;">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirm-password" required minlength="6"
+                        placeholder="Confirm new password">
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn"
+                        style="flex: 1; background: linear-gradient(135deg, #4a90e2, #2c5aa0);">Update
+                        Password</button>
+                    <button type="button" class="modal-cancel-btn btn"
+                        style="flex: 1; background: #95a5a6;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        async function login(event) {
-            event.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+    <!-- Account Settings Modal -->
+    <div id="modal-account-settings" class="confirm-dialog hidden">
+        <div class="confirm-box">
+            <h3>🏦 Account Settings</h3>
+            <div style="margin-top: 1.5rem; text-align: left;">
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Account Holder</p>
+                    <p id="settings-account-name"
+                        style="margin: 0; font-size: 1.1rem; font-weight: 600; color: #2c3e50;">-</p>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Account Number</p>
+                    <p style="margin: 0; font-family: monospace; font-size: 1rem; letter-spacing: 1px;">**** ****
+                        ****
+                        4091</p>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Account Type</p>
+                    <p style="margin: 0; color: #2c3e50; font-weight: 500;">Checking Account</p>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Account Status</p>
+                    <p style="margin: 0; color: #2ecc71; font-weight: 600;">✓ Active</p>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <button type="button" class="modal-cancel-btn btn" style="width: 100%;">Close</button>
+            </div>
+        </div>
+    </div>
 
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+    <!-- Contact Support Modal -->
+    <div id="modal-contact-support" class="confirm-dialog hidden">
+        <div class="confirm-box">
+            <h3>📞 Contact Support</h3>
+            <form id="contact-support-form">
+                <div class="input-group" style="text-align: left; margin-top: 1.5rem;">
+                    <label>Subject</label>
+                    <input type="text" id="support-subject" required placeholder="Describe your issue">
+                </div>
+                <div class="input-group" style="text-align: left;">
+                    <label>Message</label>
+                    <textarea id="support-message" required placeholder="Please provide details..."
+                        style="width: 100%; padding: 0.75rem; border: 2px solid #e0e0e0; border-radius: 6px; font-family: inherit; resize: vertical; height: 120px;"></textarea>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="btn"
+                        style="flex: 1; background: linear-gradient(135deg, #4a90e2, #2c5aa0);">Send
+                        Message</button>
+                    <button type="button" class="modal-cancel-btn btn"
+                        style="flex: 1; background: #95a5a6;">Cancel</button>
+                </div>
+            </form>
+            <p style="margin-top: 1rem; font-size: 0.85rem; color: #7f8c8d; text-align: center;">📧
+                support@depibank.com
+                | 🕒 24/7 Support Available</p>
+        </div>
+    </div>
 
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dashboard-view').style.display = 'block';
-                document.getElementById('logout-btn').style.display = 'block';
-                loadDashboard();
-            } else {
-                alert(data.message);
-            }
-        }
+    <!-- Card Details Modal -->
+    <div id="modal-card-details" class="confirm-dialog hidden">
+        <div class="confirm-box">
+            <h3>💳 Card Details</h3>
+            <div style="margin-top: 1.5rem; text-align: left;">
+                <div
+                    style="padding: 1.5rem; background: linear-gradient(135deg, #4a90e2, #2c5aa0); border-radius: 12px; color: white; margin-bottom: 1rem;">
+                    <p style="margin: 0 0 1rem 0; font-size: 0.85rem; opacity: 0.9;">DEPI BANK CARD</p>
+                    <p style="margin: 0 0 1.5rem 0; font-family: monospace; letter-spacing: 3px; font-size: 1.3rem;">
+                        4532 •••• •••• 4091</p>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <p style="margin: 0; font-size: 0.7rem; opacity: 0.8;">CARD HOLDER</p>
+                            <p style="margin: 0; font-weight: 600;">Admin User</p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.7rem; opacity: 0.8;">VALID THRU</p>
+                            <p style="margin: 0; font-weight: 600;">02/26</p>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Card Type</p>
+                    <p style="margin: 0; color: #2c3e50; font-weight: 500;">Debit Card</p>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Daily Limit</p>
+                    <p style="margin: 0; color: #2c3e50; font-weight: 500;">$2,000.00</p>
+                </div>
+                <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <p
+                        style="margin: 0 0 0.5rem 0; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">
+                        Status</p>
+                    <p style="margin: 0; color: #2ecc71; font-weight: 600;">✓ Active</p>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <button type="button" class="modal-cancel-btn btn" style="width: 100%;">Close</button>
+            </div>
+        </div>
+    </div>
 
-        async function loadDashboard() {
-            const response = await fetch('/api/dashboard');
-            const data = await response.json();
+    <!-- Logout Confirmation -->
+    <div id="logout-confirm" class="confirm-dialog hidden">
+        <div class="confirm-box"
+            style="background: linear-gradient(135deg, #4a90e2 0%, #2c5aa0 100%); color: white; padding: 2.5rem; border-radius: 16px;">
+            <h3 style="color: white; font-size: 1.4rem; margin: 0 0 1rem 0;">👋 Are you sure?</h3>
+            <p style="color: rgba(255, 255, 255, 0.95); margin: 0 0 1.5rem 0; font-size: 1rem;">You're about to sign
+                out
+                of your account</p>
+            <div style="margin-top: 1.8rem; display: flex; gap: 1rem;">
+                <button id="confirm-logout" class="btn"
+                    style="flex: 1; background: rgba(255, 255, 255, 0.95); color: #2c5aa0; border: none; font-weight: 600; padding: 0.9rem; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.2)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">Yes, Sign
+                    Out</button>
+                <button id="cancel-logout" class="btn"
+                    style="flex: 1; background: rgba(255, 255, 255, 0.2); color: white; border: 2px solid rgba(255, 255, 255, 0.5); font-weight: 600; padding: 0.9rem; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.borderColor='rgba(255, 255, 255, 0.8)';"
+                    onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.borderColor='rgba(255, 255, 255, 0.5)';">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-            if (data.success) {
-                document.getElementById('welcome-msg').innerText = `Welcome back, ${data.name}!`;
-                document.getElementById('account-balance').innerText = `$${data.balance.toFixed(2)}`;
-                
-                const tbody = document.getElementById('transaction-body');
-                tbody.innerHTML = ''; 
-                
-                data.transactions.forEach(tx => {
-                    const row = document.createElement('tr');
-                    const amtClass = tx.amount > 0 ? 'amount-positive' : 'amount-negative';
-                    const amtPrefix = tx.amount > 0 ? '+' : '';
-                    row.innerHTML = `
-                        <td>${tx.date}</td>
-                        <td>${tx.desc}</td>
-                        <td class="${amtClass}">${amtPrefix}$${tx.amount.toFixed(2)}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-        }
-
-        async function transferFunds(event) {
-            event.preventDefault();
-            const recipient = document.getElementById('recipient').value;
-            const amount = document.getElementById('amount').value;
-            const desc = document.getElementById('desc').value;
-
-            const response = await fetch('/api/transfer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipient, amount, desc })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                alert("Transfer successful!");
-                document.getElementById('transfer-form').reset();
-                loadDashboard();
-            } else {
-                alert("Error: " + data.message);
-            }
-        }
-
-        async function logout() {
-            await fetch('/api/logout', { method: 'POST' });
-            document.getElementById('dashboard-view').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'none';
-            document.getElementById('login-view').style.display = 'flex';
-            document.getElementById('login-form').reset();
-        }
-
-        loadDashboard().catch(() => console.log("User not logged in"));
-    </script>
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/transfer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/actions.js') }}"></script>
 </body>
+
 </html>
